@@ -1,3 +1,5 @@
+- Always open and read `.codexrules` file before taking any action.
+
 # Climate Comfort Score (Streamlit)
 
 Минимальный проект без базы данных: сбор климат-данных из API, агрегация в 12 месяцев, расчет ComfortScore и экспорт CSV.
