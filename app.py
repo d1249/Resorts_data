@@ -41,7 +41,7 @@ export_md = st.checkbox("Export Markdown", value=False)
 
 if st.button("Build / Refresh"):
     with st.spinner("Building monthly climate table..."):
-        df, provenance, csv_path = build_monthly_table(
+        df, provenance, csv_path, md_path = build_monthly_table(
             location=location,
             sources_cfg=sources_cfg,
             params=params,
@@ -102,3 +102,10 @@ if st.button("Build / Refresh"):
         file_name=csv_path.name,
         mime="text/csv",
     )
+    if md_path and md_path.exists():
+        st.download_button(
+            label="Download Markdown",
+            data=md_path.read_bytes(),
+            file_name=md_path.name,
+            mime="text/markdown",
+        )

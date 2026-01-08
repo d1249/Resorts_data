@@ -12,5 +12,12 @@ from src.models import Location
 
 class WindWaveProvider(ABC):
     @abstractmethod
-    def fetch(self, location: Location, start_date: date, end_date: date, cache: DiskCache, refresh: bool = False) -> Tuple[pd.DataFrame, Dict[str, str]]:
+    def fetch(
+        self,
+        location: Location,
+        start_date: date,
+        end_date: date,
+        cache: DiskCache,
+        refresh: bool = False,
+    ) -> Tuple[pd.DataFrame, Dict[str, object]]:
         raise NotImplementedError

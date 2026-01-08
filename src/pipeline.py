@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 
 import pandas as pd
 import yaml
@@ -42,7 +42,7 @@ def build_monthly_table(
     outputs_dir: Path,
     refresh: bool = False,
     export_md: bool = False,
-) -> Tuple[pd.DataFrame, Dict[str, object], Path]:
+) -> Tuple[pd.DataFrame, Dict[str, object], Path, Optional[Path]]:
     period = sources_cfg["period"]
     start_date = date(int(period["start_year"]), 1, 1)
     end_date = date(int(period["end_year"]), 12, 31)
@@ -115,9 +115,10 @@ def build_monthly_table(
 
     csv_path = outputs_dir / f"{location.location_id}_monthly.csv"
     export_csv(df, csv_path)
+    md_path: Optional[Path] = None
     if export_md:
-        export_md_path = outputs_dir / f"{location.location_id}_monthly.md"
-        export_md(df, export_md_path)
+        md_path = outputs_dir / f"{location.location_id}_monthly.md"
+        export_md(df, md_path)
 
     provenance = {
         "location_id": location.location_id,
@@ -142,7 +143,7 @@ def build_monthly_table(
     prov_path = outputs_dir / f"{location.location_id}_provenance.json"
     prov_path.write_text(json.dumps(provenance, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    return df, provenance, csv_path
+    return df, provenance, csv_path, md_path
 
 
 def _average_days_per_month(start_year: int, end_year: int) -> pd.Series:

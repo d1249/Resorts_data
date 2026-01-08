@@ -16,7 +16,7 @@ def fetch_sea_surface_temperature(
     end_date: date,
     cache: DiskCache,
     refresh: bool = False,
-) -> Tuple[pd.DataFrame, Dict[str, str]]:
+) -> Tuple[pd.DataFrame, Dict[str, object]]:
     """Fetch daily sea surface temperature via Open-Meteo marine API."""
     endpoint = "https://marine-api.open-meteo.com/v1/marine"
     params = {
@@ -28,16 +28,25 @@ def fetch_sea_surface_temperature(
         "timezone": "UTC",
     }
     cache_key = f"sea_sst:{location.location_id}:{params}"
-    if not refresh:
-        cached = cache.get("sea_sst", cache_key)
-        if cached:
-            return _to_dataframe(cached), {"source": "open_meteo_marine"}
+    cached = cache.get("sea_sst", cache_key)
+    if cached and not refresh:
+        return _to_dataframe(cached), {"source": "open_meteo_marine", "cached": True}
 
-    response = requests.get(endpoint, params=params, timeout=60)
-    response.raise_for_status()
-    data = response.json()
+    try:
+        response = requests.get(endpoint, params=params, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException:
+        if cached:
+            return _to_dataframe(cached), {
+                "source": "open_meteo_marine",
+                "cached": True,
+                "fallback_cache": True,
+            }
+        raise
+
     cache.set("sea_sst", cache_key, data)
-    return _to_dataframe(data), {"source": "open_meteo_marine"}
+    return _to_dataframe(data), {"source": "open_meteo_marine", "cached": False}
 
 
 def _to_dataframe(payload: Dict[str, object]) -> pd.DataFrame:
