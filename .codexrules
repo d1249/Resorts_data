@@ -1,9 +1,9 @@
 # Codex Rules
 
-- Всегда сначала открывай и читай этот файл `.codexrules` перед любыми действиями.
-- Если вносятся правки в проект:
-  - Сначала проверь и при необходимости обнови MD-файл с требованиями.
-  - Только после актуализации требований переходи к изменениям кода.
+- Always open and read this `.codexrules` file before taking any action.
+- If changes are being made to the project:
+  - First check and, if needed, update the requirements Markdown file.
+  - Only after the requirements are up to date should you proceed to code changes.
 
 # Notes
-- Сохраняй требования в Markdown-формате и поддерживай их в актуальном состоянии.
+- Keep requirements in Markdown format and maintain them as current.
