@@ -1,0 +1,29 @@
+score:
+  clamp_min: 0
+  clamp_max: 100
+  rounding: 0.1
+
+thresholds:
+  dS: 4.0
+  SeaMax: 28.0
+  S0: 20.0
+  S1: 22.0
+  S2: 24.0
+  S3: 26.0
+  S4: 29.0
+  RainT1: 6
+  RainT2: 14
+  ColdAirT: 22.0
+  WindColdT: 8.0
+  HeatAirT: 33.0
+  CalmWindT: 2.0
+  BreathAirT: 30.0
+  BreathRainT: 12
+  BreathWindT: 3.0
+  StrongWindT: 10.0
+  BreezeW0: 2.5
+  BreezeW1: 6.0
+  BreezeRamp: 2.5
+  WaveT1: 0.5
+  WaveT2: 1.2
+  WaveT3: 2.0
