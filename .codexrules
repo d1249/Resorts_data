@@ -1,0 +1,9 @@
+# Codex Rules
+
+- Always open and read this `.codexrules` file before taking any action.
+- If changes are being made to the project:
+  - First check and, if needed, update `REQUIREMENTS.md`.
+  - Only after the requirements are up to date should you proceed to code changes.
+
+# Notes
+- Keep requirements in Markdown format and maintain them as current.
