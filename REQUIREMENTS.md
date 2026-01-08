@@ -20,9 +20,12 @@ Deliver a no-DB Streamlit app that builds 12-month climate normals, computes Com
 - [ ] Streamlit app runs via `streamlit run app.py` and displays monthly table, charts, and decomposition.
 - [ ] CSV export includes required columns and locale formatting.
 - [ ] Provenance JSON records sources, period, coordinates, and coverage metrics.
+- [ ] Wind metric uses daily mean wind speed at 10m (not max) when available.
+- [ ] Optional Markdown export can be downloaded from the UI when enabled.
 
 **Edge Cases:**
-- [ ] Cache miss with API unavailable falls back to cached or raises a visible error.
+- [ ] Cache miss with API unavailable falls back to cached data if available or raises a visible error.
+- [ ] Forced refresh falls back to cached data if the API is unreachable, and provenance records the fallback.
 - [ ] Months with insufficient coverage are flagged and displayed with `+` indicators.
 
 **Constraints:**
