@@ -1,9 +1,51 @@
 # Codex Rules
 
-- Always open and read this `.codexrules` file before taking any action.
-- If changes are being made to the project:
-  - First check and, if needed, update `REQUIREMENTS.md`.
-  - Only after the requirements are up to date should you proceed to code changes.
+These rules are the “operating system” for working in this repo.
 
-# Notes
-- Keep requirements in Markdown format and maintain them as current.
+## 0) Non-negotiables (do these first)
+- Always open and read this `.codexrules` file before taking any action.
+- Next, read `README.md`, then `REQUIREMENTS.md` to understand intent, scope, and constraints.
+- If anything is unclear, update `REQUIREMENTS.md` with assumptions/questions **before** coding or restructuring.
+
+## 1) Requirements-first workflow (docs before diffs)
+If you are going to change anything beyond typos (data, scripts, structure, behavior):
+1. Update `REQUIREMENTS.md` first:
+   - Add/adjust the requirement(s).
+   - Include acceptance criteria (what “done” means).
+   - Include a short “verification” note (how to check it works / data is correct).
+2. Only then implement changes.
+3. After implementation, ensure `README.md` still reflects how to use the repo (commands, layout, outputs).
+
+## 2) Repo intent & minimalism
+- Prefer a small, reproducible repo: avoid adding heavy frameworks or dependencies unless requirements explicitly justify them.
+- Don’t introduce a database. Keep things file-based unless requirements say otherwise.
+- Any new top-level folder must be documented in `README.md` (what it is + what goes there).
+
+## 3) Data conventions (when data appears in this repo)
+If you add datasets (CSV/JSON/etc.), follow these defaults unless `REQUIREMENTS.md` overrides:
+- Put data under `data/` and keep it organized:
+  - `data/raw/` — source snapshots (immutable)
+  - `data/processed/` — cleaned/standardized outputs
+  - `data/derived/` — computed metrics/features/aggregations
+- Add a `data/README.md` (or a section in root `README.md`) that states:
+  - schema (column names, units, types)
+  - rounding rules
+  - provenance (sources + retrieval date)
+- Never silently change schemas:
+  - If schema changes, bump a “schema version” note in `REQUIREMENTS.md` and explain the migration.
+
+## 4) Scripts & tooling conventions (when code appears)
+- Keep scripts in `scripts/` (one-off utilities) and reusable code in `src/` (importable modules).
+- If you add Python dependencies:
+  - create `pyproject.toml` (preferred) or a pinned `requirements.txt`
+  - document install/run steps in `README.md`
+- Add at least one “smoke check” command in `README.md` (e.g., generate outputs, validate schema).
+
+## 5) Change discipline (quality bar)
+- Make changes in small, reviewable steps.
+- If you generate files, ensure they’re deterministic and documented (how to reproduce).
+- Update docs in the same PR/commit series as the change (no “docs later”).
+
+## Notes
+- `REQUIREMENTS.md` is the source of truth for behavior and workflow requirements.
+- When in doubt: write it down in `REQUIREMENTS.md` first, then implement.
