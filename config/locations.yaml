@@ -1,0 +1,13 @@
+locations:
+  - location_id: th_phi_phi_don_tonsai
+    country: "Таиланд"
+    resort: "Пхи Пхи"
+    area: "Пхи Пхи Дон (Тонсай / Ло Далум)"
+    lat: 7.7400
+    lon: 98.7780
+    wave_point:
+      mode: protected
+      lat: 7.7390
+      lon: 98.7760
+    timezone: "Asia/Bangkok"
+    tags: ["island", "beach"]

@@ -1,0 +1,21 @@
+period:
+  start_year: 2001
+  end_year: 2020
+
+coverage:
+  min_coverage: 0.8
+
+cache:
+  ttl_days: 30
+
+sources:
+  air_rain:
+    primary: open_meteo_archive
+  sea_temp:
+    primary: open_meteo_marine
+  wind_wave:
+    primary: open_meteo
+
+fallbacks:
+  allow_estimated_rain_days: false
+  allow_last_resort: false
