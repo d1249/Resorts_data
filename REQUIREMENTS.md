@@ -5,6 +5,13 @@
 **Goal:**  
 Deliver a no-DB Streamlit app that builds 12-month climate normals for preset locations, computes ComfortScore with full component decomposition, visualizes results, and exports CSV (plus optional Markdown) with provenance.
 
+**Requirements-first checklist (see `.codexrules` §1):**
+- Update `REQUIREMENTS.md`.
+- Add or adjust acceptance criteria.
+- Add a verification note.
+- Implement the change.
+- Update `README.md` usage notes.
+
 ## Progress Status
 Progress: 0/9 complete
 
