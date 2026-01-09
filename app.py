@@ -4,7 +4,6 @@ from pathlib import Path
 
 import streamlit as st
 
-from src.formatting import format_with_flag
 from src.pipeline import build_monthly_table, load_locations, load_params, load_sources
 from src.report.plots import plot_components, plot_metrics, plot_scores
 
@@ -54,20 +53,19 @@ if st.button("Build / Refresh"):
     st.success("Completed!")
 
     display_df = df.copy()
-    display_df["AirTempC_avgHigh"] = [
-        format_with_flag(val, flag) for val, flag in zip(df["AirTempC_avgHigh"], df["flag_air"])
-    ]
-    display_df["SeaTempC"] = [
-        format_with_flag(val, flag) for val, flag in zip(df["SeaTempC"], df["flag_sea"])
-    ]
-    display_df["RainDays_ge1mm"] = [
-        format_with_flag(val, flag, decimals=0) for val, flag in zip(df["RainDays_ge1mm"], df["flag_rain"])
-    ]
-    display_df["Wind_ms_10m"] = [
-        format_with_flag(val, flag) for val, flag in zip(df["Wind_ms_10m"], df["flag_wind"])
-    ]
-    display_df["WaveHeightHs_m"] = [
-        format_with_flag(val, flag) for val, flag in zip(df["WaveHeightHs_m"], df["flag_wave"])
+    display_df = display_df[
+        [
+            "Country",
+            "Resort",
+            "Area",
+            "Month",
+            "AirTempC",
+            "SeaTempC",
+            "RainDays",
+            "Wind_ms",
+            "WaveHs_m",
+            "ComfortScore",
+        ]
     ]
 
     st.subheader("Monthly table")
@@ -84,17 +82,22 @@ if st.button("Build / Refresh"):
 
     month_row = df.loc[df["Month"] == int(month_choice)].iloc[0]
     penalties = {
-        "WavePen": month_row["WavePen"],
-        "RainPen": month_row["RainPen"],
+        "Cold": month_row["Cold"],
+        "WindExCold": month_row["WindExCold"],
         "WetPen": month_row["WetPen"],
+        "RainPen": month_row["RainPen"],
         "HeatPen": month_row["HeatPen"],
         "BreathPen": month_row["BreathPen"],
         "StrongWindPen": month_row["StrongWindPen"],
+        "WavePen": month_row["WavePen"],
     }
     top_penalties = sorted(penalties.items(), key=lambda item: item[1], reverse=True)[:3]
     st.write("**Top penalties:**")
     for name, value in top_penalties:
         st.write(f"- {name}: {value:.1f}")
+
+    st.subheader("Provenance")
+    st.json(provenance)
 
     st.download_button(
         label="Download CSV",

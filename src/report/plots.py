@@ -11,7 +11,7 @@ def plot_scores(df: pd.DataFrame) -> None:
 
 def plot_metrics(df: pd.DataFrame) -> None:
     metrics = df.set_index("Month")[
-        ["AirTempC_avgHigh", "SeaTempC", "RainDays_ge1mm", "Wind_ms_10m", "WaveHeightHs_m"]
+        ["AirTempC_num", "SeaTempC_num", "RainDays_num", "Wind_ms_num", "WaveHs_m_num"]
     ]
     st.line_chart(metrics)
 
@@ -22,7 +22,11 @@ def plot_components(df: pd.DataFrame, month: int) -> None:
         {
             "SeaBase": row["SeaBase"],
             "AirAdj": row["AirAdj"],
+            "Breeze": row["Breeze"],
+            "WarmForBreeze": row["WarmForBreeze"],
             "BreezeBonus": row["BreezeBonus"],
+            "Cold": -row["Cold"],
+            "WindExCold": -row["WindExCold"],
             "WetPen": -row["WetPen"],
             "RainPen": -row["RainPen"],
             "HeatPen": -row["HeatPen"],
