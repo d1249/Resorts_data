@@ -84,6 +84,9 @@ Deliver a no-DB Streamlit app that builds 12-month climate normals for preset lo
 - Unit tests cover score clamping and at least one compute_score fixture.
 
 **Acceptance Criteria:**
+- **Progress Tracker:** `0/7 (0%)`  
+  `░░░░░░░░░░`  
+  _Update this line as criteria are completed (e.g., `3/7 (43%)`)._
 - [ ] Streamlit app runs via `streamlit run app.py` and displays monthly table, charts, and decomposition.
 - [ ] Monthly table has 12 rows for each location, with no empty metric cells.
 - [ ] ComfortScore uses parameters from YAML and produces components.
@@ -93,6 +96,9 @@ Deliver a no-DB Streamlit app that builds 12-month climate normals for preset lo
 - [ ] Optional Markdown export can be downloaded from the UI when enabled.
 
 **Constraints:**
+- **Progress Tracker:** `0/2 (0%)`  
+  `░░░░░░░░░░`  
+  _Update this line as constraints are satisfied._
 - [ ] File-backed cache in `data/cache/` with TTL configuration.
 - [ ] No database usage.
 
