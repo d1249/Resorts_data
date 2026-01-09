@@ -7,8 +7,10 @@ def test_clamp_score():
     params = {
         "score": {"clamp_min": 0, "clamp_max": 100},
         "thresholds": {
+            "dS": 4.0,
             "S0": 20.0,
             "S4": 30.0,
+            "WindColdT": 8.0,
             "ColdAirT": 22.0,
             "HeatAirT": 33.0,
             "BreezeW0": 2.0,
@@ -35,8 +37,10 @@ def test_reasonable_score():
     params = {
         "score": {"clamp_min": 0, "clamp_max": 100},
         "thresholds": {
+            "dS": 4.0,
             "S0": 20.0,
             "S4": 30.0,
+            "WindColdT": 8.0,
             "ColdAirT": 22.0,
             "HeatAirT": 33.0,
             "BreezeW0": 2.0,
@@ -58,3 +62,4 @@ def test_reasonable_score():
     score, components = compute_score(28, 27, 6, 4, 0.8, params)
     assert 40 <= score <= 100
     assert "SeaBase" in components
+    assert "Score_raw" in components

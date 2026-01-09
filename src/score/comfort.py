@@ -30,15 +30,31 @@ def compute_score(
     sea_base = _interp(sea_c, thresholds["S0"], thresholds["S4"], 0, 100)
     sea_base = _clamp(sea_base, 0, 100)
 
-    air_adj = 0.0
-    if air_c < thresholds["ColdAirT"]:
-        air_adj -= (thresholds["ColdAirT"] - air_c) * 2
+    air_adj = -abs(air_c - sea_c) * thresholds["dS"]
+
+    breeze = _interp(wind_ms, 0, thresholds["BreezeW0"], 0, 5)
+
+    warm_for_breeze = 0.0
     if air_c > thresholds["HeatAirT"]:
-        air_adj -= (air_c - thresholds["HeatAirT"]) * 2
+        warm_for_breeze = _interp(
+            air_c,
+            thresholds["HeatAirT"],
+            thresholds["HeatAirT"] + thresholds["dS"],
+            0,
+            5,
+        )
 
     breeze_bonus = 0.0
     if thresholds["BreezeW0"] < wind_ms < thresholds["BreezeW1"]:
         breeze_bonus = (wind_ms - thresholds["BreezeW0"]) * thresholds["BreezeRamp"]
+
+    cold = 0.0
+    if air_c < thresholds["ColdAirT"]:
+        cold = (thresholds["ColdAirT"] - air_c) * 2
+
+    wind_ex_cold = 0.0
+    if air_c < thresholds["ColdAirT"] and wind_ms > thresholds["WindColdT"]:
+        wind_ex_cold = (wind_ms - thresholds["WindColdT"]) * 1.5
 
     rain_pen = _interp(rain_days, thresholds["RainT1"], thresholds["RainT2"], 0, 20)
     rain_pen = _clamp(rain_pen, 0, 20)
@@ -63,23 +79,58 @@ def compute_score(
     if wind_ms > thresholds["StrongWindT"]:
         strong_wind_pen = (wind_ms - thresholds["StrongWindT"]) * 1.5
 
-    wave_pen = _interp(wave_hs_m, thresholds["WaveT1"], thresholds["WaveT3"], 0, 15)
+    wave_pen = 0.0
+    if wave_hs_m > thresholds["WaveT1"]:
+        if wave_hs_m <= thresholds["WaveT2"]:
+            wave_pen = _interp(
+                wave_hs_m,
+                thresholds["WaveT1"],
+                thresholds["WaveT2"],
+                0,
+                7.5,
+            )
+        else:
+            wave_pen = _interp(
+                wave_hs_m,
+                thresholds["WaveT2"],
+                thresholds["WaveT3"],
+                7.5,
+                15,
+            )
     wave_pen = _clamp(wave_pen, 0, 15)
 
-    score = sea_base + air_adj + breeze_bonus
-    score -= (wet_pen + rain_pen + heat_pen + breath_pen + strong_wind_pen + wave_pen)
+    score_raw = (
+        sea_base
+        + air_adj
+        + breeze
+        + warm_for_breeze
+        + breeze_bonus
+        - cold
+        - wind_ex_cold
+        - wet_pen
+        - rain_pen
+        - heat_pen
+        - breath_pen
+        - strong_wind_pen
+        - wave_pen
+    )
 
-    score = _clamp(score, clamp_min, clamp_max)
+    score = _clamp(score_raw, clamp_min, clamp_max)
 
     components = {
         "SeaBase": sea_base,
         "AirAdj": air_adj,
+        "Breeze": breeze,
+        "WarmForBreeze": warm_for_breeze,
         "BreezeBonus": breeze_bonus,
+        "Cold": cold,
+        "WindExCold": wind_ex_cold,
         "WetPen": wet_pen,
         "RainPen": rain_pen,
         "HeatPen": heat_pen,
         "BreathPen": breath_pen,
         "StrongWindPen": strong_wind_pen,
         "WavePen": wave_pen,
+        "Score_raw": score_raw,
     }
     return score, components
