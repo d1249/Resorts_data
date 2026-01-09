@@ -5,6 +5,21 @@
 **Goal:**  
 Deliver a no-DB Streamlit app that builds 12-month climate normals for preset locations, computes ComfortScore with full component decomposition, visualizes results, and exports CSV (plus optional Markdown) with provenance.
 
+## Progress Status
+Progress: 0/9 complete
+
+| Requirement | Status |
+| --- | --- |
+| Acceptance Criteria: Streamlit app runs via `streamlit run app.py` and displays monthly table, charts, and decomposition. | Not started |
+| Acceptance Criteria: Monthly table has 12 rows for each location, with no empty metric cells. | Not started |
+| Acceptance Criteria: ComfortScore uses parameters from YAML and produces components. | Not started |
+| Acceptance Criteria: CSV export matches required columns, locale formatting, and separate flag columns. | Not started |
+| Acceptance Criteria: Provenance JSON records sources, period, coordinates, coverage metrics, and cache fallback indicators. | Not started |
+| Acceptance Criteria: Cache-first is honored, and forced refresh falls back to cached data if the API is unreachable. | Not started |
+| Acceptance Criteria: Optional Markdown export can be downloaded from the UI when enabled. | Not started |
+| Constraint: File-backed cache in `data/cache/` with TTL configuration. | Not started |
+| Constraint: No database usage. | Not started |
+
 **Scope:**  
 - Fetch air/rain, sea temperature, wind, and wave data from public APIs with file-backed cache.
 - Aggregate daily data into monthly normals with coverage checks and flags.
