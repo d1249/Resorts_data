@@ -120,13 +120,15 @@ def build_monthly_table(
     df.insert(0, "Resort", location.resort)
     df.insert(0, "Country", location.country)
 
+    wind_source = wind_meta["wind"]["source"]
+    wave_source = wind_meta["wave"]["source"]
     df["sources_summary"] = ", ".join(
-        [air_meta["source"], sea_meta["source"], wind_meta["source"]]
+        [air_meta["source"], sea_meta["source"], wind_source, wave_source]
     )
     df["air_source"] = air_meta["source"]
     df["sea_source"] = sea_meta["source"]
-    df["wind_source"] = wind_meta["source"]
-    df["wave_source"] = wind_meta["source"]
+    df["wind_source"] = wind_source
+    df["wave_source"] = wave_source
 
     df["AirTempC"] = [
         format_with_flag(val, flag) for val, flag in zip(df["AirTempC_num"], df["mark_air"])
@@ -218,15 +220,17 @@ def _build_rain_days(
     rain_days = rain_mean * _average_days_per_month(start_year, end_year)
     estimated = pd.Series(False, index=rain_days.index)
 
-    if allow_estimated and rain_days.isna().all():
+    if allow_estimated and rain_days.isna().any():
         totals = air_df.copy()
         totals["month"] = totals["date"].dt.month
         totals["year"] = totals["date"].dt.year
         monthly_total = totals.groupby(["year", "month"])["prcp_mm"].sum().reset_index()
         avg_total = monthly_total.groupby("month")["prcp_mm"].mean().reindex(rain_days.index)
-        rain_days = avg_total / mm_per_rain_day_proxy
-        rain_cov = pd.Series(False, index=rain_days.index)
-        estimated = rain_days.notna()
+        estimated_values = avg_total / mm_per_rain_day_proxy
+        needs_estimate = rain_days.isna() & estimated_values.notna()
+        rain_days = rain_days.where(~needs_estimate, estimated_values)
+        rain_cov = rain_cov.where(~needs_estimate, False)
+        estimated = estimated | needs_estimate
 
     return rain_days, rain_cov, estimated
 

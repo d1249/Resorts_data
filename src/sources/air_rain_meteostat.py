@@ -31,7 +31,7 @@ def fetch_air_rain_daily(
     }
     cache_key = (
         f"{source_name}:{source_version}:{location.location_id}:{location.lat}:{location.lon}:"
-        f"{start_date.isoformat()}:{end_date.isoformat()}:{params['daily']}"
+        f"{start_date.isoformat()}:{end_date.isoformat()}:{params['daily']}:units=metric"
     )
     cached = cache.get("air_rain", cache_key)
     if cached and not refresh:

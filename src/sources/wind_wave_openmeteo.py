@@ -46,7 +46,7 @@ def _fetch_wind(
     }
     cache_key = (
         f"{source_name}:{source_version}:{location.location_id}:{location.lat}:{location.lon}:"
-        f"{start_date.isoformat()}:{end_date.isoformat()}:{params['daily']}"
+        f"{start_date.isoformat()}:{end_date.isoformat()}:{params['daily']}:units=metric"
     )
     cached = cache.get("wind", cache_key)
     if cached and not refresh:
@@ -102,7 +102,7 @@ def _fetch_wave(
     cache_key = (
         f"{source_name}:{source_version}:{location.location_id}:{location.wave_point.lat}:"
         f"{location.wave_point.lon}:{start_date.isoformat()}:{end_date.isoformat()}:"
-        f"{params['daily']}"
+        f"{params['daily']}:units=metric"
     )
     cached = cache.get("wave", cache_key)
     if cached and not refresh:
