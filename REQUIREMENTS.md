@@ -103,12 +103,19 @@ Progress: 0/9 complete
   `░░░░░░░░░░`  
   _Update this line as criteria are completed (e.g., `3/7 (43%)`)._
 - [ ] Streamlit app runs via `streamlit run app.py` and displays monthly table, charts, and decomposition.
+  - Verification: Run `streamlit run app.py`, pick a location, and confirm the monthly table, score chart, metrics chart, and decomposition chart render.
 - [ ] Monthly table has 12 rows for each location, with no empty metric cells.
+  - Verification: In the running app, select a location and verify the monthly table shows 12 rows (months 1–12) and no blank metric cells.
 - [ ] ComfortScore uses parameters from YAML and produces components.
+  - Verification: Open `config/params.yaml`, then in the app select a location and confirm the decomposition chart lists component names (e.g., SeaBase, AirAdj) and scores are derived from those parameters.
 - [ ] CSV export matches required columns, locale formatting, and separate flag columns.
+  - Verification: Download `outputs/{location_id}_{period}_monthly.csv` and confirm columns include identity, display, numeric, score, component, and flag fields (e.g., `Country`, `Resort`, `Month`, `AirTempC`, `AirTempC_num`, `Score`, `SeaBase`, `mark_air`) with `;` delimiter and decimal commas.
 - [ ] Provenance JSON records sources, period, coordinates, coverage metrics, and cache fallback indicators.
+  - Verification: Open `outputs/{location_id}_{period}_provenance.json` and verify it includes source names, requested/actual period, coordinates/station IDs, coverage metrics, and cache fallback flags.
 - [ ] Cache-first is honored, and forced refresh falls back to cached data if the API is unreachable.
+  - Verification: Run once to populate cache, then disable network or simulate API failure, click force refresh, and confirm the UI still renders using cached data without errors.
 - [ ] Optional Markdown export can be downloaded from the UI when enabled.
+  - Verification: Enable Markdown export, click download, and confirm `outputs/{location_id}_{period}_monthly.md` is created with a readable table.
 
 **Constraints:**
 - **Progress Tracker:** `0/2 (0%)`  
