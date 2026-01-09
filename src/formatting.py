@@ -16,4 +16,6 @@ def format_decimal(value: Any, decimals: int = 1) -> str:
 
 def format_with_flag(value: Any, flag: int, decimals: int = 1) -> str:
     formatted = format_decimal(value, decimals)
+    if not formatted:
+        return ""
     return f"+{formatted}" if flag else formatted
