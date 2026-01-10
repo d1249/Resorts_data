@@ -8,6 +8,7 @@ import requests
 
 from src.cache import DiskCache
 from src.models import Location
+from src.sources.utils import build_cache_key, build_source_meta
 
 
 def fetch_air_rain_daily(
@@ -29,41 +30,56 @@ def fetch_air_rain_daily(
         "daily": "temperature_2m_max,precipitation_sum",
         "timezone": "UTC",
     }
-    cache_key = (
-        f"{source_name}:{source_version}:{location.location_id}:{location.lat}:{location.lon}:"
-        f"{start_date.isoformat()}:{end_date.isoformat()}:{params['daily']}:units=metric"
+    cache_key = build_cache_key(
+        source_name,
+        source_version,
+        location.location_id,
+        location.lat,
+        location.lon,
+        start_date,
+        end_date,
+        params["daily"],
     )
     cached = cache.get("air_rain", cache_key)
     if cached and not refresh:
-        return _to_dataframe(cached), {
-            "source": source_name,
-            "cached": True,
-            "requested_period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
-            "actual_period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
-        }
+        return _to_dataframe(cached), build_source_meta(
+            source_name,
+            source_version,
+            start_date,
+            end_date,
+            {"lat": location.lat, "lon": location.lon},
+            cached=True,
+            cache_fallback=False,
+        )
 
     try:
         response = requests.get(endpoint, params=params, timeout=60)
         response.raise_for_status()
         data = response.json()
-    except requests.RequestException:
+    except requests.RequestException as exc:
         if cached:
-            return _to_dataframe(cached), {
-                "source": source_name,
-                "cached": True,
-                "fallback_cache": True,
-                "requested_period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
-                "actual_period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
-            }
+            return _to_dataframe(cached), build_source_meta(
+                source_name,
+                source_version,
+                start_date,
+                end_date,
+                {"lat": location.lat, "lon": location.lon},
+                cached=True,
+                cache_fallback=True,
+                error=exc,
+            )
         raise
 
     cache.set("air_rain", cache_key, data)
-    return _to_dataframe(data), {
-        "source": source_name,
-        "cached": False,
-        "requested_period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
-        "actual_period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
-    }
+    return _to_dataframe(data), build_source_meta(
+        source_name,
+        source_version,
+        start_date,
+        end_date,
+        {"lat": location.lat, "lon": location.lon},
+        cached=False,
+        cache_fallback=False,
+    )
 
 
 def _to_dataframe(payload: Dict[str, object]) -> pd.DataFrame:

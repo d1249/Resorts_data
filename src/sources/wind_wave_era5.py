@@ -18,5 +18,5 @@ class Era5WindWave(WindWaveProvider):
         end_date: date,
         cache: DiskCache,
         refresh: bool = False,
-    ) -> Tuple[pd.DataFrame, Dict[str, str]]:
+    ) -> Tuple[pd.DataFrame, Dict[str, object]]:
         raise NotImplementedError("ERA5 provider requires credentials/configuration.")
