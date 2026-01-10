@@ -5,7 +5,13 @@ from pathlib import Path
 import streamlit as st
 
 from src.pipeline import build_monthly_table, load_locations, load_params, load_sources
-from src.report.plots import plot_components, plot_metrics, plot_scores
+from src.report.plots import (
+    METRIC_OPTIONS,
+    plot_components_month,
+    plot_components_overview,
+    plot_metric,
+    plot_scores,
+)
 
 ROOT = Path(__file__).parent
 CONFIG_DIR = ROOT / "config"
@@ -75,10 +81,14 @@ if st.button("Build / Refresh"):
     plot_scores(df)
 
     st.subheader("Air/Sea/Rain/Wind/Wave")
-    plot_metrics(df)
+    metric_choice = st.selectbox("Metric", list(METRIC_OPTIONS.keys()))
+    plot_metric(df, metric_choice)
+
+    st.subheader("Component decomposition by month")
+    plot_components_overview(df)
 
     month_choice = st.selectbox("Decomposition month", df["Month"].tolist())
-    plot_components(df, int(month_choice))
+    plot_components_month(df, int(month_choice))
 
     month_row = df.loc[df["Month"] == int(month_choice)].iloc[0]
     penalties = {
@@ -91,13 +101,26 @@ if st.button("Build / Refresh"):
         "StrongWindPen": month_row["StrongWindPen"],
         "WavePen": month_row["WavePen"],
     }
-    top_penalties = sorted(penalties.items(), key=lambda item: item[1], reverse=True)[:3]
-    st.write("**Top penalties:**")
-    for name, value in top_penalties:
-        st.write(f"- {name}: {value:.1f}")
+    top_penalties = [
+        item for item in sorted(penalties.items(), key=lambda item: item[1], reverse=True) if item[1] > 0
+    ][:3]
+    st.subheader("Почему месяц плохой")
+    if top_penalties:
+        for name, value in top_penalties:
+            st.write(f"- {name}: {value:.1f}")
+    else:
+        st.write("Штрафов нет — месяц выглядит комфортным.")
 
     st.subheader("Provenance")
-    st.json(provenance)
+    with st.expander("Подробности источников"):
+        st.json(provenance)
+    source_summary = {
+        "air_rain": provenance["sources"]["air_rain"].get("source"),
+        "sea": provenance["sources"]["sea"].get("source"),
+        "wind": provenance["sources"]["wind_wave"]["components"]["wind"].get("source"),
+        "wave": provenance["sources"]["wind_wave"]["components"]["wave"].get("source"),
+    }
+    st.write("**Summary:**", source_summary)
 
     st.download_button(
         label="Download CSV",
