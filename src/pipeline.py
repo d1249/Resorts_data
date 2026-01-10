@@ -100,7 +100,13 @@ def build_monthly_table(
         refresh,
     )
 
-    air_mean, air_cov = monthly_mean_from_daily(air_df, "tmax_c", min_coverage)
+    air_mean, air_cov = monthly_mean_from_daily(
+        air_df,
+        "tmax_c",
+        min_coverage,
+        start_year=start_date.year,
+        end_year=end_date.year,
+    )
     rain_days, rain_cov, rain_estimated = _build_rain_days(
         air_df,
         start_date.year,
@@ -110,9 +116,27 @@ def build_monthly_table(
         mm_per_rain_day_proxy,
     )
 
-    sea_mean, sea_cov = monthly_mean_from_daily(sea_df, "sst_c", min_coverage)
-    wind_mean, wind_cov = monthly_mean_from_daily(wind_wave_df, "wind_ms", min_coverage)
-    wave_mean, wave_cov = monthly_mean_from_daily(wind_wave_df, "wave_hs_m", min_coverage)
+    sea_mean, sea_cov = monthly_mean_from_daily(
+        sea_df,
+        "sst_c",
+        min_coverage,
+        start_year=start_date.year,
+        end_year=end_date.year,
+    )
+    wind_mean, wind_cov = monthly_mean_from_daily(
+        wind_wave_df,
+        "wind_ms",
+        min_coverage,
+        start_year=start_date.year,
+        end_year=end_date.year,
+    )
+    wave_mean, wave_cov = monthly_mean_from_daily(
+        wind_wave_df,
+        "wave_hs_m",
+        min_coverage,
+        start_year=start_date.year,
+        end_year=end_date.year,
+    )
 
     air_meta["coverage"] = air_cov.to_dict()
     sea_meta["coverage"] = sea_cov.to_dict()
@@ -122,7 +146,7 @@ def build_monthly_table(
         wind_meta["components"]["wave"]["coverage"] = wave_cov.to_dict()
 
     air = apply_coverage_flags(air_mean, air_cov)
-    rain = apply_coverage_flags(rain_days, rain_cov)
+    rain = apply_coverage_flags(rain_days, rain_cov, estimated=rain_estimated)
     sea = apply_coverage_flags(sea_mean, sea_cov)
     wind = apply_coverage_flags(wind_mean, wind_cov)
     wave = apply_coverage_flags(wave_mean, wave_cov)
@@ -137,7 +161,7 @@ def build_monthly_table(
 
     df["mark_air"] = air["flag"]
     df["mark_sea"] = sea["flag"]
-    df["mark_rain"] = rain["flag"] | rain_estimated
+    df["mark_rain"] = rain["flag"]
     df["mark_wind"] = wind["flag"]
     df["mark_wave"] = wave["flag"]
 
@@ -262,18 +286,27 @@ def _build_rain_days(
     allow_estimated: bool,
     mm_per_rain_day_proxy: float,
 ) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    months = pd.Index(range(1, 13), name="month")
     rain_indicator = air_df.copy()
     rain_indicator["rain_day"] = (rain_indicator["prcp_mm"] >= 1.0).astype(float)
-    rain_mean, rain_cov = monthly_mean_from_daily(rain_indicator, "rain_day", min_coverage)
+    rain_mean, rain_cov = monthly_mean_from_daily(
+        rain_indicator,
+        "rain_day",
+        min_coverage,
+        start_year=start_year,
+        end_year=end_year,
+    )
     rain_days = rain_mean * _average_days_per_month(start_year, end_year)
-    estimated = pd.Series(False, index=rain_days.index)
+    rain_days = rain_days.reindex(months)
+    rain_cov = rain_cov.reindex(months)
+    estimated = pd.Series(False, index=months)
 
     if allow_estimated and rain_days.isna().any():
         totals = air_df.copy()
         totals["month"] = totals["date"].dt.month
         totals["year"] = totals["date"].dt.year
         monthly_total = totals.groupby(["year", "month"])["prcp_mm"].sum().reset_index()
-        avg_total = monthly_total.groupby("month")["prcp_mm"].mean().reindex(rain_days.index)
+        avg_total = monthly_total.groupby("month")["prcp_mm"].mean().reindex(months)
         estimated_values = avg_total / mm_per_rain_day_proxy
         needs_estimate = rain_days.isna() & estimated_values.notna()
         rain_days = rain_days.where(~needs_estimate, estimated_values)
