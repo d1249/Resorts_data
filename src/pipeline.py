@@ -165,6 +165,16 @@ def build_monthly_table(
     df["mark_wind"] = wind["flag"]
     df["mark_wave"] = wave["flag"]
 
+    last_resort_flags = {
+        "AirTempC": pd.Series(False, index=months),
+        "SeaTempC": pd.Series(False, index=months),
+        "RainDays": pd.Series(False, index=months),
+        "Wind_ms": pd.Series(False, index=months),
+        "WaveHs_m": pd.Series(False, index=months),
+    }
+    if allow_last_resort:
+        last_resort_flags = _apply_last_resort(df)
+
     scores = []
     components_rows = []
     for month, row in df.iterrows():
@@ -240,7 +250,7 @@ def build_monthly_table(
         md_path = outputs_dir / f"{location.location_id}_{period_label}_monthly.md"
         export_md(df, md_path)
 
-    marks_detail = _build_marks_detail(df, rain_estimated, min_coverage)
+    marks_detail = _build_marks_detail(df, rain_estimated, min_coverage, last_resort_flags)
     provenance = {
         "location_id": location.location_id,
         "period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
@@ -316,6 +326,35 @@ def _build_rain_days(
     return rain_days, rain_cov, estimated
 
 
+def _fill_last_resort(series: pd.Series) -> Tuple[pd.Series, pd.Series]:
+    series = series.copy()
+    filled = series.interpolate(limit_direction="both")
+    if filled.isna().any():
+        mean_value = filled.mean(skipna=True)
+        if pd.isna(mean_value):
+            mean_value = 0.0
+        filled = filled.fillna(mean_value)
+    filled_mask = series.isna() & filled.notna()
+    return filled, filled_mask
+
+
+def _apply_last_resort(df: pd.DataFrame) -> Dict[str, pd.Series]:
+    mapping = {
+        "AirTempC": ("AirTempC_num", "mark_air"),
+        "SeaTempC": ("SeaTempC_num", "mark_sea"),
+        "RainDays": ("RainDays_num", "mark_rain"),
+        "Wind_ms": ("Wind_ms_num", "mark_wind"),
+        "WaveHs_m": ("WaveHs_m_num", "mark_wave"),
+    }
+    last_resort_flags: Dict[str, pd.Series] = {}
+    for metric, (value_col, mark_col) in mapping.items():
+        filled, filled_mask = _fill_last_resort(df[value_col])
+        df[value_col] = filled
+        df[mark_col] = df[mark_col] | filled_mask
+        last_resort_flags[metric] = filled_mask
+    return last_resort_flags
+
+
 def _fetch_with_fallbacks(
     source_kind: str,
     primary: str,
@@ -376,22 +415,37 @@ def _build_marks_detail(
     df: pd.DataFrame,
     rain_estimated: pd.Series,
     min_coverage: float,
+    last_resort_flags: Dict[str, pd.Series],
 ) -> Dict[str, object]:
     marks = {}
     for month, row in df.iterrows():
         month_marks = []
         if row["mark_air"]:
-            month_marks.append({"metric": "AirTempC", "reason": f"coverage_below_{min_coverage}"})
+            reason = f"coverage_below_{min_coverage}"
+            if last_resort_flags["AirTempC"].loc[month]:
+                reason = "last_resort_estimate"
+            month_marks.append({"metric": "AirTempC", "reason": reason})
         if row["mark_sea"]:
-            month_marks.append({"metric": "SeaTempC", "reason": f"coverage_below_{min_coverage}"})
+            reason = f"coverage_below_{min_coverage}"
+            if last_resort_flags["SeaTempC"].loc[month]:
+                reason = "last_resort_estimate"
+            month_marks.append({"metric": "SeaTempC", "reason": reason})
         if row["mark_rain"]:
             reason = f"coverage_below_{min_coverage}"
             if rain_estimated.loc[month]:
                 reason = "estimated_from_total"
+            if last_resort_flags["RainDays"].loc[month]:
+                reason = "last_resort_estimate"
             month_marks.append({"metric": "RainDays", "reason": reason})
         if row["mark_wind"]:
-            month_marks.append({"metric": "Wind_ms", "reason": f"coverage_below_{min_coverage}"})
+            reason = f"coverage_below_{min_coverage}"
+            if last_resort_flags["Wind_ms"].loc[month]:
+                reason = "last_resort_estimate"
+            month_marks.append({"metric": "Wind_ms", "reason": reason})
         if row["mark_wave"]:
-            month_marks.append({"metric": "WaveHs_m", "reason": f"coverage_below_{min_coverage}"})
+            reason = f"coverage_below_{min_coverage}"
+            if last_resort_flags["WaveHs_m"].loc[month]:
+                reason = "last_resort_estimate"
+            month_marks.append({"metric": "WaveHs_m", "reason": reason})
         marks[str(month)] = month_marks
     return marks
