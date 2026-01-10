@@ -11,11 +11,15 @@ cache:
 sources:
   air_rain:
     primary: open_meteo_archive
+    fallbacks: []
   sea_temp:
     primary: open_meteo_marine
+    fallbacks: []
   wind_wave:
     primary: open_meteo
+    fallbacks: []
 
 fallbacks:
   allow_estimated_rain_days: false
+  mm_per_rain_day_proxy: 5.0
   allow_last_resort: false

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, Callable, Iterable, List
 
 import pandas as pd
 import yaml
@@ -19,6 +19,20 @@ from src.score.comfort import compute_score
 from src.sources.air_rain_meteostat import fetch_air_rain_daily
 from src.sources.sea_sst_erddap import fetch_sea_surface_temperature
 from src.sources.wind_wave_openmeteo import OpenMeteoWindWave
+from src.sources.wind_wave_era5 import Era5WindWave
+from src.sources.utils import format_error
+
+
+AIR_RAIN_PROVIDERS: Dict[str, Callable[..., Tuple[pd.DataFrame, Dict[str, object]]]] = {
+    "open_meteo_archive": fetch_air_rain_daily,
+}
+SEA_PROVIDERS: Dict[str, Callable[..., Tuple[pd.DataFrame, Dict[str, object]]]] = {
+    "open_meteo_marine": fetch_sea_surface_temperature,
+}
+WIND_WAVE_PROVIDERS: Dict[str, Callable[[], OpenMeteoWindWave]] = {
+    "open_meteo": OpenMeteoWindWave,
+    "era5": Era5WindWave,
+}
 
 
 def load_locations(path: Path) -> list[Location]:
@@ -55,9 +69,36 @@ def build_monthly_table(
 
     cache = DiskCache(cache_dir, ttl_days=int(sources_cfg["cache"]["ttl_days"]))
 
-    air_df, air_meta = fetch_air_rain_daily(location, start_date, end_date, cache, refresh)
-    sea_df, sea_meta = fetch_sea_surface_temperature(location, start_date, end_date, cache, refresh)
-    wind_wave_df, wind_meta = OpenMeteoWindWave().fetch(location, start_date, end_date, cache, refresh)
+    air_df, air_meta = _fetch_with_fallbacks(
+        "air_rain",
+        sources_cfg["sources"]["air_rain"]["primary"],
+        sources_cfg["sources"]["air_rain"].get("fallbacks", []),
+        location,
+        start_date,
+        end_date,
+        cache,
+        refresh,
+    )
+    sea_df, sea_meta = _fetch_with_fallbacks(
+        "sea_temp",
+        sources_cfg["sources"]["sea_temp"]["primary"],
+        sources_cfg["sources"]["sea_temp"].get("fallbacks", []),
+        location,
+        start_date,
+        end_date,
+        cache,
+        refresh,
+    )
+    wind_wave_df, wind_meta = _fetch_with_fallbacks(
+        "wind_wave",
+        sources_cfg["sources"]["wind_wave"]["primary"],
+        sources_cfg["sources"]["wind_wave"].get("fallbacks", []),
+        location,
+        start_date,
+        end_date,
+        cache,
+        refresh,
+    )
 
     air_mean, air_cov = monthly_mean_from_daily(air_df, "tmax_c", min_coverage)
     rain_days, rain_cov, rain_estimated = _build_rain_days(
@@ -72,6 +113,13 @@ def build_monthly_table(
     sea_mean, sea_cov = monthly_mean_from_daily(sea_df, "sst_c", min_coverage)
     wind_mean, wind_cov = monthly_mean_from_daily(wind_wave_df, "wind_ms", min_coverage)
     wave_mean, wave_cov = monthly_mean_from_daily(wind_wave_df, "wave_hs_m", min_coverage)
+
+    air_meta["coverage"] = air_cov.to_dict()
+    sea_meta["coverage"] = sea_cov.to_dict()
+    wind_meta["coverage"] = {"wind": wind_cov.to_dict(), "wave": wave_cov.to_dict()}
+    if "components" in wind_meta:
+        wind_meta["components"]["wind"]["coverage"] = wind_cov.to_dict()
+        wind_meta["components"]["wave"]["coverage"] = wave_cov.to_dict()
 
     air = apply_coverage_flags(air_mean, air_cov)
     rain = apply_coverage_flags(rain_days, rain_cov)
@@ -120,8 +168,8 @@ def build_monthly_table(
     df.insert(0, "Resort", location.resort)
     df.insert(0, "Country", location.country)
 
-    wind_source = wind_meta["wind"]["source"]
-    wave_source = wind_meta["wave"]["source"]
+    wind_source = wind_meta["components"]["wind"]["source"]
+    wave_source = wind_meta["components"]["wave"]["source"]
     df["sources_summary"] = ", ".join(
         [air_meta["source"], sea_meta["source"], wind_source, wave_source]
     )
@@ -233,6 +281,62 @@ def _build_rain_days(
         estimated = estimated | needs_estimate
 
     return rain_days, rain_cov, estimated
+
+
+def _fetch_with_fallbacks(
+    source_kind: str,
+    primary: str,
+    fallbacks: Iterable[str],
+    location: Location,
+    start_date: date,
+    end_date: date,
+    cache: DiskCache,
+    refresh: bool,
+) -> Tuple[pd.DataFrame, Dict[str, object]]:
+    registry = _provider_registry(source_kind)
+    errors: List[Tuple[str, BaseException]] = []
+    for provider_name in [primary, *list(fallbacks)]:
+        if provider_name not in registry:
+            raise ValueError(f"Unknown provider '{provider_name}' for {source_kind}.")
+        try:
+            provider = registry[provider_name]
+            if source_kind == "wind_wave":
+                df, meta = provider().fetch(location, start_date, end_date, cache, refresh)
+            else:
+                df, meta = provider(location, start_date, end_date, cache, refresh)
+        except Exception as exc:  # noqa: BLE001
+            errors.append((provider_name, exc))
+            continue
+        if errors:
+            meta = _annotate_fallback_meta(meta, errors, provider_name)
+        return df, meta
+    raise errors[-1][1]
+
+
+def _provider_registry(source_kind: str) -> Dict[str, Callable[..., object]]:
+    if source_kind == "air_rain":
+        return AIR_RAIN_PROVIDERS
+    if source_kind == "sea_temp":
+        return SEA_PROVIDERS
+    if source_kind == "wind_wave":
+        return WIND_WAVE_PROVIDERS
+    raise ValueError(f"Unknown source kind '{source_kind}'.")
+
+
+def _annotate_fallback_meta(
+    meta: Dict[str, object],
+    errors: List[Tuple[str, BaseException]],
+    provider_name: str,
+) -> Dict[str, object]:
+    meta = dict(meta)
+    meta["fallback_used"] = True
+    meta["fallback_provider"] = provider_name
+    meta["fallbacks_tried"] = [
+        {"source": name, "error": format_error(error)} for name, error in errors
+    ]
+    if meta.get("error") is None and errors:
+        meta["error"] = format_error(errors[-1][1])
+    return meta
 
 
 def _build_marks_detail(
