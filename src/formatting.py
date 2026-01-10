@@ -10,8 +10,10 @@ def format_decimal(value: Any, decimals: int = 1) -> str:
         return ""
     if isinstance(value, float) and math.isnan(value):
         return ""
-    fmt = f"{value:.{decimals}f}" if isinstance(value, (float, int)) else str(value)
-    return fmt.replace(".", ",")
+    if isinstance(value, (float, int)):
+        fmt = f"{value:.{decimals}f}"
+        return fmt.replace(".", ",")
+    return str(value).replace(".", ",")
 
 
 def format_with_flag(value: Any, flag: int, decimals: int = 1) -> str:
