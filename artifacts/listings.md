@@ -2,6 +2,8 @@
 
 Всего записей: **121**. Данные собраны из онлайн-источников; часть страниц могла требовать human verification/anti-bot.
 
+> Актуальная приоритизированная пользовательская выжимка (45 вариантов, статусы, shortlist и финалисты) вынесена в `lead_table_2026-03-04.md` и `shortlist.md`.
+
 | id | source | title | area | housing_type | price_thb | price_unit | min_stay | utilities_note | wifi_note | kitchen | washer | pool | parking | noise_risk | reliability | booking_protection | url | checked_at |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | L001 | booking | Booking поиск апартаментов Chaweng (60 ночей) | Chaweng | apartment |  | unknown | нужно уточнить | не указано | нужно подтвердить | unknown | unknown | unknown | unknown | med (центр может быть шумным) | high (крупная платформа) | yes | https://www.booking.com/searchresults.en-gb.html?ss=Chaweng%2C+Koh+Samui | 2026-03-04 |

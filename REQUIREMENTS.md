@@ -134,5 +134,21 @@ Progress: 0/9 complete
 **Notes/Links:**  
 - Config files live under `config/`.
 
+## Additional Focus
+### Rental leads knowledge base sync (Chaweng / Chaweng Noi / Lamai)
+**Goal:**
+Keep the rental research artifacts up to date with the latest verified lead table, shortlist candidates, and final finalists pack provided by the user.
+
+**Acceptance Criteria:**
+- [ ] Repository contains an updated structured table with all 45 variants from the latest input, including status labels and risk/payment notes.
+- [ ] Repository contains an updated shortlist block with 13 candidates and rationale.
+- [ ] Repository contains an updated finalists block with 5 options and explicit pre-payment clarification checklist per finalist.
+- [ ] README for rental artifacts reflects the new consolidated lead pack and where to find it.
+
+**Verification:**
+- Open `artifacts/lead_table_2026-03-04.md` and confirm rows 1–45 are present with date `2026-03-04`.
+- Open `artifacts/shortlist.md` and confirm Top-13 and Top-5 finalists sections match the latest user-provided pack.
+- Open `artifacts/README.md` and confirm it links to the consolidated lead table and updated shortlist/finalists.
+
 ## Backlog (Optional)
 - Add additional locations and optional provider fallbacks.
